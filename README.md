@@ -20,6 +20,7 @@ Coffee Club помогает клиентам:
 ---
 
 ##  Структура проекта
+```
 coffee-club-api/
 ├── docs/                      # Документация
 │   ├── requirements.md        # Требования
@@ -31,3 +32,4 @@ coffee-club-api/
 │   └── order-service/
 │       └── openapi.yaml
 └── README.md
+```
