@@ -1,0 +1,252 @@
+openapi: 3.0.0
+info:
+  title: Coffee Club Auth Service
+  version: 1.0.0 
+  description: Микросервис авторизации
+  contact:
+    name: Coffee Club Support
+    email: support@coffeeclub.com
+  
+servers: 
+  - url: https://auth.coffeeclub.com/v1
+    description: Production
+    
+tags:
+  - name: Auth
+    description: Операции авторизации и регистрации
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен доступа
+      
+      
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        phone:
+          type: string
+          pattern: '^\+7[0-9]{10}$'
+          example: "+79001234567"
+        name:
+          type: string
+          example: "Анна Смирнова"
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: "anna@example.com"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: "Код ошибки"
+          example: "INVALID_PHONE"
+        message:
+          type: string
+          description: "Человекочитаемое описание ошибки"
+          example: "Неверный формат номера телефона"
+        details:
+          type: object
+          description: "Дополнительная информация об ошибке"
+          additionalProperties: true    
+      
+  
+      
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Регистрация нового пользователя
+      description: Отправляет SMS с кодом подвтерждения на указанный телефон
+      operationId: registerUser
+      requestBody: 
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - phone
+              properties:
+                phone:
+                  type: string
+                  pattern: '^\+7[0-9]{10}$'
+                  example: "+79001234567"
+                  description: "Номер телефона в формате +7XXXXXXXXXX"
+                name: 
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  example: "Анна Смирнова"
+                  description: "Имя пользователя (опционально)"
+      
+      responses:
+        '200':
+          description: SMS с кодом подтверждения успешно отправлен
+          content: 
+            application/json:
+              schema: 
+                type: object
+                properties: 
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Код подтверждения отправлен"
+                  expires_in:
+                    type: integer
+                    example: 3000
+                    description: "Время жизни кода в секундах"
+          
+        '400': 
+          description: Неверный номер или формат
+          content: 
+             application/json:
+              schema: 
+                type: object
+              examples:
+                invalidPhone:
+                  value:
+                    code: "INVALID_PHONE"
+                    message: "Неверный формат номера телефона"
+                phoneExists:
+                  value:
+                    code: "PHONE_ALREADY_EXISTS"
+                    message: "Пользователь с таким номером уже зарегистрирован"
+          
+  /auth/verify:
+    post:
+      tags:
+        - Auth
+      summary:  Подтверждение кода из SMS
+      operationId: verifyCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: 
+              type: object
+              required:
+                - phone
+                - code
+              properties:
+                phone:
+                  type: string
+                  pattern: '^\+7[0-9]{10}$'
+                  example: "+79001234567"
+                code:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+                  example: "123456"
+                  description: "6-значный код из SMS"
+      responses:
+        '200':
+          description: Успешная авторизация
+          content:
+            application/json:
+              schema: 
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    description: "JWT токен доступа"
+                  refresh_token:
+                    type: string
+                    example: "d4f8g7h6j5k4l3m2n1p0o9i8u7y6t5r4e3w2q1"
+                    description: "Refresh токен"
+                  expires_in:
+                    type: integer
+                    example: 3600
+                    description: "Время жизни access_token в секундах"
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+              examples:                   
+                invalidCode:
+                  value:
+                    code: "INVALID_CODE"
+                    message: "Неверный код"
+                invalidPhone:
+                  value:
+                    code: "INVALID_PHONE"
+                    message: "Неверный телефон"
+                
+  /auth/logout:
+    post:
+      tags: 
+        - Auth
+      summary: Выход из системы
+      operationId: Выход из системы
+      security: 
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Успешный выход
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+  /auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Получение информации о текущем пользователе
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Информация о пользователе
+          content: 
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/User' 
+        '401':
+          description: Информация о пользователе
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/ErrorResponse' 
+                    
+                    
+                    
+
+        
