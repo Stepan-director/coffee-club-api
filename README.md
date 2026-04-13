@@ -21,13 +21,13 @@ Coffee Club помогает клиентам:
 
 ##  Структура проекта
 coffee-club-api/
-├── docs/ # Документация
-│ ├── requirements.md # Требования
-│ ├── bpmn/ # BPMN диаграммы
-│ └── uml/ # UML диаграммы
-├── specs/ # API контракты
-│ ├── auth-service/
-│ │ └── openapi.yaml
-│ └── order-service/
-│ └── openapi.yaml
+├── docs/                      # Документация
+│   ├── requirements.md        # Требования
+│   ├── bpmn/                  # BPMN диаграммы
+│   └── uml/                   # UML диаграммы
+├── specs/                     # API контракты
+│   ├── auth-service/
+│   │   └── openapi.yaml
+│   └── order-service/
+│       └── openapi.yaml
 └── README.md
